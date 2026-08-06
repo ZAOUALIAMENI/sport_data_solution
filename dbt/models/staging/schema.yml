@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: stg_employees
+    description: Données salariés renommées depuis la couche RAW.
+
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+
+      - name: nom
+        tests:
+          - not_null
+
+      - name: prenom
+        tests:
+          - not_null
+
+      - name: date_naissance
+        tests:
+          - not_null
+
+      - name: bu
+        tests:
+          - not_null
+
+      - name: type_contrat
+        tests:
+          - not_null
+
+  - name: stg_activities
+    description: Données des activités sportives renommées depuis la couche RAW.
+
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_employees')
+              field: employee_id
+
+      - name: date_debut
+        tests:
+          - not_null
+
+      - name: date_fin
+        tests:
+          - not_null
+
+      - name: sport_type
+        tests:
+          - not_null
+  - name: stg_commute_distances
+    description: Distances domicile - entreprise calculées via Google Maps.
+
+    columns:
+
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+
+      - name: distance_meters
+        tests:
+          - not_null
+
+      - name: duration_seconds
+        tests:
+          - not_null
+
+      - name: api_status
+        tests:
+          - accepted_values:
+              values: ['OK']

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: public
+    tables:
+      - name: employees_raw
+      - name: activities_raw
+      - name: commute_distances_raw

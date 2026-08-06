@@ -1,0 +1,42 @@
+name: 'sport_data_solution'
+version: '1.0.0'
+config-version: 2
+
+profile: 'sport_data_solution'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  sport_data_solution:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+
+# ==========================================================
+# Variables métier
+# Centralisation des règles de gestion
+# ==========================================================
+
+vars:
+
+  # Distance maximale domicile → entreprise
+  max_walk_km: 15
+  max_bike_km: 25
+
+  # Avantages salariés
+  sport_bonus_rate: 0.05
+  min_activities: 15
+  wellbeing_days: 5

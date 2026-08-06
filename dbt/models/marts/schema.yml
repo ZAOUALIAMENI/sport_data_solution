@@ -1,0 +1,47 @@
+version: 2
+
+models:
+
+  - name: mart_dashboard
+    description: >
+      Table métier finale alimentant le tableau de bord Power BI.
+      Elle regroupe les informations RH, les activités sportives,
+      les trajets domicile-travail et les avantages accordés.
+
+    columns:
+
+      - name: employee_id
+        description: Identifiant unique du salarié.
+        tests:
+          - unique
+          - not_null
+
+      - name: sportif
+        description: Indique si le salarié pratique un sport.
+        tests:
+          - not_null
+
+      - name: eligible_sport_bonus
+        description: Salarié éligible à la prime sportive.
+        tests:
+          - not_null
+
+      - name: eligible_wellbeing_days
+        description: Salarié éligible aux journées bien-être.
+        tests:
+          - not_null
+
+      - name: sport_bonus
+        description: Montant annuel de la prime sportive.
+        tests:
+          - not_null
+
+      - name: wellbeing_days
+        description: Nombre de journées bien-être accordées.
+        tests:
+          - not_null
+
+      - name: commute_status
+        description: Cohérence de la déclaration du trajet domicile-travail.
+        tests:
+          - not_null

@@ -1,0 +1,58 @@
+version: 2
+
+models:
+
+  - name: int_employee_activity_summary
+    description: Synthèse annuelle des activités par salarié.
+
+    columns:
+      - name: employee_id
+        tests:
+          - unique
+          - not_null
+
+      - name: nb_activities
+        tests:
+          - not_null
+
+      - name: total_distance_metres
+        tests:
+          - not_null
+
+      - name: total_duration_seconds
+        tests:
+          - not_null
+
+  - name: int_employee_commute
+    description: Vérification de la cohérence des déplacements domicile-travail.
+
+    columns:
+      - name: employee_id
+        tests:
+          - unique
+          - not_null
+
+      - name: distance_meters
+        tests:
+          - not_null
+
+      - name: incoherent_commute
+        tests:
+          - not_null
+
+  - name: int_employee_benefits
+    description: Calcul des avantages sportifs.
+
+    columns:
+      - name: employee_id
+        tests:
+          - unique
+          - not_null
+
+      - name: sport_bonus
+        tests:
+          - not_null
+
+      - name: wellbeing_days
+        tests:
+          - not_null
