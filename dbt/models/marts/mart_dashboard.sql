@@ -48,6 +48,15 @@ SELECT
     a.last_activity_sport,
 
     a.last_activity_comment,
+    ROUND(
+      a.last_activity_distance_metres / 1000.0,
+      2
+    ) AS last_activity_distance_km,
+
+    ROUND(
+      a.last_activity_duration_seconds / 60.0,
+      1
+    ) AS last_activity_duration_minutes,
 
     -- ==========================================================
     -- Déplacements domicile → entreprise

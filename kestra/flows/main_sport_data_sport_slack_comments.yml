@@ -1,0 +1,112 @@
+id: sport_slack_comments
+namespace: sport_data
+
+description: >
+  Génère et diffuse dans Slack un commentaire métier
+  pour chaque nouvelle activité sportive.
+
+tasks:
+
+  # ==========================================================
+  # 1. Récupération des nouvelles activités
+  # ==========================================================
+
+  - id: get_activities
+    type: io.kestra.plugin.jdbc.postgresql.Query
+
+    url: jdbc:postgresql://postgres:5432/sport_data
+    username: admin
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+
+    sql: |
+      SELECT
+        a.id,
+        a."ID salarié" AS employee_id,
+        e.prenom,
+        e.nom,
+        a."Type d'activité" AS sport_type,
+
+        CASE
+          WHEN a."Distance (m)" IS NULL THEN ''
+          ELSE
+            '📏 Distance : '
+            || ROUND(a."Distance (m)" / 1000.0, 2)::text
+            || ' km'
+        END AS distance_message,
+
+        CASE
+          WHEN a."Temps écoulé (s)" IS NULL THEN ''
+
+          WHEN a."Temps écoulé (s)" >= 3600 THEN
+            FLOOR(a."Temps écoulé (s)" / 3600)::text
+            || ' h '
+            || FLOOR(
+                 MOD(a."Temps écoulé (s)", 3600) / 60
+               )::text
+            || ' min'
+
+          ELSE
+            FLOOR(a."Temps écoulé (s)" / 60)::text
+            || ' min'
+        END AS duration_message,
+
+        COALESCE(
+          a."Commentaire",
+          ''
+        ) AS commentaire,
+
+        a."Date de début" AS date_debut
+
+      FROM public.activities_raw a
+
+      INNER JOIN public.stg_employees e
+        ON a."ID salarié" = e.employee_id
+
+      WHERE a.slack_sent_at IS NULL
+
+      ORDER BY a."Date de début" ASC;
+
+
+    fetchType: FETCH
+
+
+  # ==========================================================
+  # 2. Envoi d'un message Slack pour chaque activité
+  # ==========================================================
+
+  - id: send_messages
+    type: io.kestra.plugin.core.flow.ForEach
+
+    values: "{{ outputs.get_activities.rows }}"
+
+    concurrencyLimit: 5
+
+    tasks:
+
+      - id: send_slack
+        type: io.kestra.plugin.slack.notifications.SlackIncomingWebhook
+
+        url: "{{ secret('SLACK_WEBHOOK') }}"
+
+        messageText: |
+          🏃 *Bravo {{ fromJson(taskrun.value).prenom }} {{ fromJson(taskrun.value).nom }} !*
+
+          Une nouvelle activité de *{{ fromJson(taskrun.value).sport_type }}* a été réalisée !
+
+          {{ fromJson(taskrun.value).distance_message }}
+
+          ⏱️ Durée : *{{ fromJson(taskrun.value).duration_message }}*
+
+          💬 « {{ fromJson(taskrun.value).commentaire }} »
+
+      - id: mark_as_sent
+        type: io.kestra.plugin.jdbc.postgresql.Queries
+
+        url: jdbc:postgresql://postgres:5432/sport_data
+        username: admin
+        password: "{{ secret('POSTGRES_PASSWORD') }}"
+
+        sql: |
+          UPDATE public.activities_raw
+          SET slack_sent_at = NOW()
+          WHERE id = {{ fromJson(taskrun.value).id }};

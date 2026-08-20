@@ -40,6 +40,7 @@ CREATE TABLE activities_raw (
     "Distance (m)" INTEGER,
     "Temps écoulé (s)" INTEGER,
     "Commentaire" TEXT,
+    slack_sent_at TIMESTAMP NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

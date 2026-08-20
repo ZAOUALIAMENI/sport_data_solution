@@ -12,12 +12,10 @@ from sqlalchemy import create_engine, text
 # Configuration
 # ==========================================================
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+from config import DB_URL, DATA_DIR
 
-DB_URL = "postgresql://admin:admin@localhost:5432/sport_data"
-
-RH_FILE = BASE_DIR / "data" / "RH.xlsx"
-SPORT_FILE = BASE_DIR / "data" / "Sportive.xlsx"
+RH_FILE = DATA_DIR / "RH.xlsx"
+SPORT_FILE = DATA_DIR / "Sportive.xlsx"
 
 # ==========================================================
 # Lecture des fichiers
@@ -40,8 +38,6 @@ df = df_rh.merge(
     on="ID salarié",
     how="left"
 )
-
-print(df.head())
 
 # ==========================================================
 # Chargement PostgreSQL

@@ -1,22 +1,27 @@
 services:
   # ============================================
-  # 1. POSTGRESQL - Base de données
+  # 1. POSTGRESQL
   # ============================================
   postgres:
     image: postgres:16-alpine
     container_name: sport_postgres
     restart: unless-stopped
+
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
       POSTGRES_DB: ${POSTGRES_DB:-sport_data}
+
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+
     networks:
       - sport-network
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
       interval: 5s
@@ -25,95 +30,117 @@ services:
       start_period: 10s
 
   # ============================================
-  # 2. PGADMIN - Interface d'administration
+  # 2. PGADMIN
   # ============================================
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: sport_pgadmin
     restart: unless-stopped
+
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@sport.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+
     ports:
       - "${PGADMIN_PORT:-5050}:80"
+
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
     depends_on:
       postgres:
         condition: service_healthy
+
     networks:
       - sport-network
 
   # ============================================
-  # 3. KESTRA - Orchestrateur
+  # 3. KESTRA
   # ============================================
   kestra:
-    image: kestra/kestra:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.kestra
+
     container_name: sport_kestra
     restart: unless-stopped
+
+    command: server standalone --flow-path /app/flows
+
     ports:
       - "${KESTRA_PORT:-8080}:8080"
-    command: server local
+
     environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-sport_data}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+
+      SECRET_MAILTRAP_HOST: ${SECRET_MAILTRAP_HOST}
+      SECRET_MAILTRAP_PORT: ${SECRET_MAILTRAP_PORT}
+      SECRET_MAILTRAP_USERNAME: ${SECRET_MAILTRAP_USERNAME}
+      SECRET_MAILTRAP_PASSWORD: ${SECRET_MAILTRAP_PASSWORD}
+      SECRET_MAILTRAP_FROM: ${SECRET_MAILTRAP_FROM}
+      SECRET_MAILTRAP_TO: ${SECRET_MAILTRAP_TO}
+
+      SECRET_SLACK_WEBHOOK: ${SECRET_SLACK_WEBHOOK}
+      SECRET_POSTGRES_PASSWORD: ${SECRET_POSTGRES_PASSWORD}
+    
       KESTRA_CONFIGURATION: |
+
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driver-class-name: org.postgresql.Driver
+            username: ${POSTGRES_USER:-admin}
+            password: ${POSTGRES_PASSWORD:-admin}
         kestra:
           repository:
-            type: postgresql
-          datasource:
-            postgresql:
-              url: jdbc:postgresql://postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-sport_data}
-              driverClassName: org.postgresql.Driver
-              username: ${POSTGRES_USER:-admin}
-              password: ${POSTGRES_PASSWORD:-admin}
+           type: postgres
           queue:
-            type: postgresql
+            type: postgres
+
           storage:
             type: local
             local:
-              basePath: /app/storage
-    volumes:
-      - ../kestra/flows:/app/flows
-      - kestra_storage:/app/storage
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - sport-network
+              base-path: /app/storage
 
-  # ============================================
-  # 4. DBT - Transformations
-  # ============================================
-  dbt:
-    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
-    container_name: sport_dbt
-    restart: unless-stopped
-    working_dir: /usr/app
-    entrypoint: ["/bin/sh", "-c"]
-    command: 
-       - |
-         tail -f /dev/null
-    environment:
-      DBT_PROFILES_DIR: /usr/app/profiles
-      DBT_TARGET: dev
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
-      POSTGRES_DB: ${POSTGRES_DB:-sport_data}
-      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+        micronaut:
+         io:
+          watch:
+            enabled: true
+            paths:
+              - /app/flows
+
     volumes:
-      - ../dbt:/usr/app
-    tty: true
-    stdin_open: true
+      # Workflows Kestra
+      - ../kestra/flows:/app/flows
+
+      # Projet complet
+      - ../:/workspace
+
+      # Stockage Kestra
+      - kestra_storage:/app/storage
+
     depends_on:
       postgres:
         condition: service_healthy
+
     networks:
       - sport-network
 
 volumes:
   postgres_data:
     name: sport_postgres_data
+
   kestra_storage:
     name: sport_kestra_storage
+  
+  pgadmin_data:
+    name: sport_pgadmin_data
+    external: true
 
 networks:
   sport-network:

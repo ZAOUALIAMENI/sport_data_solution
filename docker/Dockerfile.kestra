@@ -1,0 +1,36 @@
+# ==========================================================
+# Sport Data Solution
+# Dockerfile Kestra
+# ==========================================================
+
+FROM kestra/kestra:latest
+
+USER root
+
+# ==========================================================
+# Installation de Python
+# ==========================================================
+
+RUN apt-get update && \
+    apt-get install -y \
+        python3 \
+        python3-pip \
+        bash \
+        git && \
+    rm -rf /var/lib/apt/lists/*
+
+# ==========================================================
+# Installation des dépendances Python
+# ==========================================================
+
+COPY requirements.txt /tmp/requirements.txt
+
+RUN pip3 install \
+    --no-cache-dir \
+    -r /tmp/requirements.txt
+
+# ==========================================================
+# Retour à l'utilisateur Kestra
+# ==========================================================
+
+USER kestra

@@ -10,6 +10,10 @@ WITH ranked_activities AS (
 
         commentaire,
 
+        distance_metres,
+
+        temps_ecoule_sec,
+
         ROW_NUMBER() OVER (
             PARTITION BY employee_id
             ORDER BY date_debut DESC
@@ -57,10 +61,14 @@ SELECT
 
     r.sport_type AS last_activity_sport,
 
-    r.commentaire AS last_activity_comment
+    r.commentaire AS last_activity_comment,
+
+    r.distance_metres AS last_activity_distance_metres,
+
+    r.temps_ecoule_sec AS last_activity_duration_seconds
 
 FROM activity_summary s
 
 LEFT JOIN ranked_activities r
-       ON s.employee_id = r.employee_id
-      AND r.rn = 1
+    ON s.employee_id = r.employee_id
+    AND r.rn = 1

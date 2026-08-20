@@ -1,0 +1,33 @@
+id: load_data
+
+namespace: sport_data
+
+description: Charge les données Excel dans la couche RAW PostgreSQL.
+
+tasks:
+
+  - id: start
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Début du workflow : Load Data ====="
+
+  - id: load_data
+    type: io.kestra.plugin.scripts.shell.Commands
+
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+
+    commands:
+      - |
+        cd /workspace
+        python3 src/load_data.py
+
+    timeout: PT5M
+
+    retry:
+      type: constant
+      interval: PT30S
+      maxAttempt: 2
+
+  - id: end
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Workflow terminé avec succès ====="

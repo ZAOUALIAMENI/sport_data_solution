@@ -1,6 +1,24 @@
+# ==========================================================
+# Sport Data Solution
+# Dépendances Python
+# ==========================================================
+
+# Manipulation des données
 pandas
 openpyxl
+
+# Base de données
 sqlalchemy
 psycopg2-binary
+
+# Configuration
 python-dotenv
+
+# API Google Maps
 googlemaps
+
+# DBT
+dbt-core==1.9.0
+dbt-postgres==1.9.0
+
+PyYAML

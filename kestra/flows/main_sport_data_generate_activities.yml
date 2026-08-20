@@ -1,0 +1,33 @@
+id: generate_activities
+
+namespace: sport_data
+
+description: Génère les activités sportives des salariés.
+
+tasks:
+
+  - id: start
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Début du workflow : Generate Activities ====="
+
+  - id: generate_activities
+    type: io.kestra.plugin.scripts.shell.Commands
+
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+
+    commands:
+      - |
+        cd /workspace
+        python3 src/generate_activities.py
+
+    timeout: PT10M
+
+    retry:
+      type: constant
+      interval: PT30S
+      maxAttempt: 2
+
+  - id: end
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Workflow terminé avec succès ====="

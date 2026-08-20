@@ -1,0 +1,85 @@
+id: main_pipeline
+
+namespace: sport_data
+
+description: Pipeline complet Sport Data Solution.
+
+tasks:
+
+  - id: start
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Début du pipeline Sport Data ====="
+
+  - id: load_data
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: sport_data
+    flowId: load_data
+    wait: true
+    transmitFailed: true
+
+  - id: generate_activities
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: sport_data
+    flowId: generate_activities
+    wait: true
+    transmitFailed: true
+
+  - id: generate_commute
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: sport_data
+    flowId: generate_commute
+    wait: true
+    transmitFailed: true
+
+  - id: dbt_pipeline
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: sport_data
+    flowId: dbt_pipeline
+    wait: true
+    transmitFailed: true
+  
+  - id: sport_slack_comments
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: sport_data
+    flowId: sport_slack_comments
+    wait: true
+    transmitFailed: true
+    
+  - id: end
+    type: io.kestra.plugin.core.log.Log
+    message: "===== Pipeline terminé avec succès ====="
+
+
+errors:
+
+  - id: send_failure_email
+    type: io.kestra.plugin.email.MailSend
+
+    from: "{{ secret('MAILTRAP_FROM') }}"
+    to: "{{ secret('MAILTRAP_TO') }}"
+
+    username: "{{ secret('MAILTRAP_USERNAME') }}"
+    password: "{{ secret('MAILTRAP_PASSWORD') }}"
+
+    host: "{{ secret('MAILTRAP_HOST') }}"
+    port: 587
+    transportStrategy: SMTP_TLS
+
+    subject: "🚨 Échec Pipeline Sport Data"
+
+    htmlTextContent: |
+      <h2>🚨 Échec du pipeline Sport Data</h2>
+
+      <p><strong>Flow :</strong> {{ flow.namespace }}.{{ flow.id }}</p>
+      <p><strong>Execution :</strong> {{ execution.id }}</p>
+
+      <h3>Erreur</h3>
+      <pre>{{ errorLogs() }}</pre>
+
+      <p>Veuillez consulter Kestra pour plus de détails.</p>
+
+triggers:
+
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *"

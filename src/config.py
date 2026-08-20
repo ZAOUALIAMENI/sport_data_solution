@@ -1,6 +1,37 @@
 """
-Configuration de la simulation
+Configuration globale du projet Sport Data Solution
 """
+
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / "docker" / ".env")
+
+# ==========================================================
+# Chemins du projet
+# ==========================================================
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = BASE_DIR / "data"
+
+# ==========================================================
+# PostgreSQL
+# ==========================================================
+
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "sport_data")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
+
+DB_URL = (
+    f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
+    f"@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+)
 
 # ==========================================================
 # Historique
@@ -76,8 +107,6 @@ COMMENTS = [
 # ==========================================================
 # Google Maps
 # ==========================================================
-
-import os
 
 COMPANY_ADDRESS = "1362 Av. des Platanes, 34970 Lattes"
 
